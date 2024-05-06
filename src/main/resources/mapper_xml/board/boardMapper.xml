@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.spring.sbt_board.dao.BoardMapper">
+
+    <select id="count" resultType="int">
+        SELECT count(*) FROM board
+    </select>
+
+    <delete id="deleteAll">
+        DELETE FROM board
+    </delete>
+
+
+    <sql id="searchCondition">
+        <choose>
+            <when test='option=="T"'>
+                AND title LIKE CONCAT('%', #{keyword}, '%')
+            </when>
+            <when test='option=="W"'>
+                AND writer LIKE CONCAT('%', #{keyword}, '%')
+            </when>
+            <otherwise>
+                AND (title LIKE CONCAT('%', #{keyword}, '%')
+                OR content LIKE CONCAT('%', #{keyword}, '%'))
+            </otherwise>
+        </choose>
+    </sql>
+
+    <select id="searchSelectPage" parameterType="com.spring.sbt_board.domain.SearchCondition" resultType="com.spring.sbt_board.domain.BoardDto">
+        SELECT bno, title, content, writer, view_cnt, comment_cnt, reg_date
+        FROM board
+        WHERE true
+        <include refid="searchCondition"/>
+        ORDER BY reg_date DESC, bno DESC
+        LIMIT #{offset}, #{pageSize}
+    </select>
+
+    <select id="searchResultCnt" parameterType="com.spring.sbt_board.domain.SearchCondition" resultType="int">
+        SELECT count(*)
+        FROM board
+        WHERE true
+        <include refid="searchCondition"/>
+    </select>
+
+    <delete id="delete" parameterType="map">
+        DELETE FROM board WHERE bno = #{bno} and writer = #{writer}
+    </delete>
+
+    <insert id="insert" parameterType="com.spring.sbt_board.domain.BoardDto">
+        INSERT INTO board
+        (title, content, writer)
+        VALUES
+        (#{title}, #{content}, #{writer})
+    </insert>
+
+    <select id="selectAll" resultType="com.spring.sbt_board.domain.BoardDto">
+        SELECT bno, title, content, writer, view_cnt, comment_cnt, reg_date
+        FROM board
+        ORDER BY reg_date DESC, bno DESC
+    </select>
+
+    <sql id="selectFromBoard">
+        SELECT bno, title, content, writer, view_cnt, comment_cnt, reg_date
+        FROM board
+    </sql>
+
+    <select id="select" parameterType="int" resultType="com.spring.sbt_board.domain.BoardDto">
+        <include refid="selectFromBoard"/>
+        WHERE bno = #{bno}
+    </select>
+
+    <select id="selectPage" parameterType="map" resultType="com.spring.sbt_board.domain.BoardDto">
+        <include refid="selectFromBoard"/>
+        ORDER BY reg_date DESC, bno DESC
+        LIMIT #{offset}, #{pageSize}
+    </select>
+
+    <update id="update" parameterType="com.spring.sbt_board.domain.BoardDto">
+        UPDATE board
+        SET title = #{title}
+        , content = #{content}
+        , up_date = now()
+        WHERE bno = #{bno} and writer = #{writer}
+    </update>
+
+    <update id="updateCommentCnt" parameterType="map">
+        UPDATE board
+        SET comment_cnt = comment_cnt + #{cnt}
+        WHERE bno = #{bno}
+    </update>
+
+    <update id="increaseViewCnt" parameterType="int">
+        UPDATE board
+        SET view_cnt = view_cnt + 1
+        WHERE bno = #{bno}
+    </update>
+
+
+</mapper>
